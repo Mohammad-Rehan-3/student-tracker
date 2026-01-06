@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>শিক্ষার্থী ট্র্যাকার ড্যাশবোর্ড</title>
+    <!-- Tailwind CSS for Styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React and Babel for running JSX in browser -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap');
+        body { 
+            font-family: 'Hind Siliguri', sans-serif;
+            background-color: #f0f4f8;
+        }
+        .custom-shadow {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+        .input-focus:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+        }
+        input[type="time"] {
+            font-family: inherit;
+        }
+    </style>
+</head>
+<body class="min-h-screen py-8 px-4">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // SVG Icons
+        const ClockIcon = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        );
+
+        const SunIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        );
+
+        const SunsetIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 18a5 5 0 0 0-10 0"/><line x1="12" y1="2" x2="12" y2="9"/><line x1="4.22" y1="10.22" x2="5.64" y2="11.64"/><line x1="1" y1="18" x2="3" y2="18"/><line x1="21" y1="18" x2="23" y2="18"/><line x1="18.36" y1="11.64" x2="19.78" y2="10.22"/><line x1="23" y1="22" x2="1" y2="22"/><polyline points="8 6 12 2 16 6"/></svg>
+        );
+
+        const MoonIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        );
+
+        function App() {
+            const [studentName, setStudentName] = useState('');
+            const [studentClass, setStudentClass] = useState('১ম');
+            const [parentName, setParentName] = useState('');
+            const [mStart, setMStart] = useState('');
+            const [mEnd, setMEnd] = useState('');
+            const [aStart, setAStart] = useState('');
+            const [aEnd, setAEnd] = useState('');
+            const [nStart, setNStart] = useState('');
+            const [nEnd, setNEnd] = useState('');
+            const [totalTime, setTotalTime] = useState({ h: 0, m: 0 });
+            const [submitted, setSubmitted] = useState(false);
+
+            const getMinutes = (time) => {
+                if (!time) return 0;
+                const [h, m] = time.split(':').map(Number);
+                return (h * 60) + m;
+            };
+
+            useEffect(() => {
+                const calc = (s, e, night = false) => {
+                    const sm = getMinutes(s);
+                    const em = getMinutes(e);
+                    if (!sm || !em) return 0;
+                    if (night && em < sm) return (1440 - sm) + em;
+                    return em > sm ? em - sm : 0;
+                };
+                const total = calc(mStart, mEnd) + calc(aStart, aEnd) + calc(nStart, nEnd, true);
+                setTotalTime({ h: Math.floor(total / 60), m: total % 60 });
+            }, [mStart, mEnd, aStart, aEnd, nStart, nEnd]);
+
+            const toBn = (n) => n.toLocaleString('bn-BD');
+
+            if (submitted) {
+                return (
+                    <div className="flex items-center justify-center min-h-[80vh]">
+                        <div className="w-full max-w-md bg-white p-8 rounded-3xl custom-shadow text-center animate-bounce-in">
+                            <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            </div>
+                            <h2 className="text-2xl font-bold text-gray-800 mb-2">রিপোর্ট সফলভাবে জমা হয়েছে!</h2>
+                            <div className="bg-blue-50 p-6 rounded-2xl text-left my-6 border border-blue-100">
+                                <p className="text-gray-700"><strong>শিক্ষার্থী:</strong> {studentName}</p>
+                                <p className="text-gray-700"><strong>শ্রেণি:</strong> {studentClass} শ্রেণি</p>
+                                <div className="mt-4 pt-4 border-t border-blue-200">
+                                    <p className="text-xl font-bold text-blue-800">মোট পড়ার সময়: {toBn(totalTime.h)} ঘণ্টা {toBn(totalTime.m)} মিনিট</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setSubmitted(false)} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold transition-all shadow-lg active:scale-95">নতুন রিপোর্ট লিখুন</button>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="max-w-xl mx-auto">
+                    <div className="bg-white rounded-[2rem] custom-shadow overflow-hidden border border-gray-100">
+                        {/* Header */}
+                        <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-8 text-white text-center">
+                            <h1 className="text-3xl font-bold mb-2">পড়ালেখার ডেইলি ট্র্যাকার</h1>
+                            <p className="text-blue-100 opacity-90">আপনার সন্তানের প্রতিদিনের পড়াশোনার হিসাব রাখুন</p>
+                        </div>
+
+                        <form onSubmit={(e) => { e.preventDefault(); setSubmitted(true); }} className="p-6 md:p-10 space-y-8">
+                            
+                            {/* Personal Info Group */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-gray-600 ml-1">শিক্ষার্থীর নাম</label>
+                                    <input required type="text" value={studentName} onChange={e => setStudentName(e.target.value)} className="w-full bg-gray-50 border-2 border-gray-100 p-4 rounded-2xl outline-none input-focus transition-all" placeholder="নাম লিখুন" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-gray-600 ml-1">শ্রেণি</label>
+                                    <select value={studentClass} onChange={e => setStudentClass(e.target.value)} className="w-full bg-gray-50 border-2 border-gray-100 p-4 rounded-2xl outline-none input-focus cursor-pointer">
+                                        {['১ম', '২য়', '৩য়', '৪র্থ', '৫ম', '৬ষ্ঠ', '৭ম', '৮ম', '৯ম', '১০ম'].map(c => <option key={c} value={c}>{c} শ্রেণি</option>)}
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Sessions Sections */}
+                            <div className="space-y-6">
+                                <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2 px-1">
+                                    <ClockIcon className="text-blue-600" size={20} /> পড়ার সময় ইনপুট দিন
+                                </h3>
+
+                                {/* Morning Session */}
+                                <div className="bg-orange-50/50 p-5 rounded-3xl border-2 border-orange-100 hover:border-orange-300 transition-colors">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="p-2 bg-orange-100 text-orange-600 rounded-xl"><SunIcon /></div>
+                                        <span className="font-bold text-orange-800">সকালবেলা</span>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <span className="text-[11px] text-orange-500 font-bold uppercase ml-1">শুরু</span>
+                                            <input type="time" value={mStart} onChange={e => setMStart(e.target.value)} className="w-full bg-white border border-orange-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-orange-200" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <span className="text-[11px] text-orange-500 font-bold uppercase ml-1">শেষ</span>
+                                            <input type="time" value={mEnd} onChange={e => setMEnd(e.target.value)} className="w-full bg-white border border-orange-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-orange-200" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Afternoon Session */}
+                                <div className="bg-blue-50/50 p-5 rounded-3xl border-2 border-blue-100 hover:border-blue-300 transition-colors">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="p-2 bg-blue-100 text-blue-600 rounded-xl"><SunsetIcon /></div>
+                                        <span className="font-bold text-blue-800">বিকেলবেলা</span>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <span className="text-[11px] text-blue-500 font-bold uppercase ml-1">শুরু</span>
+                                            <input type="time" value={aStart} onChange={e => setAStart(e.target.value)} className="w-full bg-white border border-blue-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-200" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <span className="text-[11px] text-blue-500 font-bold uppercase ml-1">শেষ</span>
+                                            <input type="time" value={aEnd} onChange={e => setAEnd(e.target.value)} className="w-full bg-white border border-blue-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-200" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Night Session */}
+                                <div className="bg-indigo-50/50 p-5 rounded-3xl border-2 border-indigo-100 hover:border-indigo-300 transition-colors">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="p-2 bg-indigo-100 text-indigo-600 rounded-xl"><MoonIcon /></div>
+                                        <span className="font-bold text-indigo-800">রাত্রিবেলা</span>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <span className="text-[11px] text-indigo-500 font-bold uppercase ml-1">শুরু</span>
+                                            <input type="time" value={nStart} onChange={e => setNStart(e.target.value)} className="w-full bg-white border border-indigo-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <span className="text-[11px] text-indigo-500 font-bold uppercase ml-1">শেষ</span>
+                                            <input type="time" value={nEnd} onChange={e => setNEnd(e.target.value)} className="w-full bg-white border border-indigo-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Result Summary Box */}
+                            <div className="bg-slate-900 p-6 rounded-[2.5rem] text-white flex justify-between items-center shadow-2xl">
+                                <div>
+                                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">মোট সময় (আজ)</p>
+                                    <p className="text-3xl font-bold text-green-400">
+                                        {toBn(totalTime.h)} ঘণ্টা {toBn(totalTime.m)} মিনিট
+                                    </p>
+                                </div>
+                                <div className="p-4 bg-white/10 rounded-3xl border border-white/10">
+                                    <ClockIcon size={32} className="text-blue-300" />
+                                </div>
+                            </div>
+
+                            {/* Footer Input */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-gray-600 ml-1">অভিভাবকের নাম</label>
+                                <input required type="text" value={parentName} onChange={e => setParentName(e.target.value)} className="w-full bg-gray-50 border-2 border-gray-100 p-4 rounded-2xl outline-none input-focus transition-all" placeholder="আপনার নাম লিখুন" />
+                            </div>
+
+                            <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-5 rounded-2xl shadow-xl transition-all transform active:scale-[0.98] text-lg uppercase tracking-wide">
+                                রিপোর্ট জমা দিন
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
